@@ -1,0 +1,316 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent YouTube Script</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 1rem;
+            margin: 0;
+            background: #f8f9fa;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #1a1a1a;
+        }
+        pre {
+            background: #eee;
+            padding: 1em;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .step {
+            background: white;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>📹 Build Your First AI Agent with LangChain</h1>
+    <p><strong>Title:</strong> Build Your First AI Agent with LangChain – Step-by-Step Tutorial!</p>
+
+    <div class="step">
+        <h2>🎬 INTRO</h2>
+        <p><strong>On Camera:</strong> Welcome! Today we're diving into how to build an AI agent using Python and LangChain.</p>
+        <p>We'll walk through a sample project that builds an AI with real-world tools like a calculator and a weather fetcher.</p>
+    </div>
+
+    <div class="step">
+        <h2>🤖 What Are AI Agents?</h2>
+        <p><strong>Concept Explanation:</strong> Before we start coding, let's understand what AI agents actually are.</p>
+        <p>Think of an AI agent as an intelligent assistant that can:</p>
+        <ul>
+            <li><strong>Reason:</strong> It can analyze a problem and decide what action to take</li>
+            <li><strong>Use Tools:</strong> It has access to external functions like calculators, APIs, or databases</li>
+            <li><strong>Plan:</strong> It can break down complex tasks into steps</li>
+            <li><strong>Act:</strong> It can execute those steps using the tools available to it</li>
+        </ul>
+        <p>The key difference between a regular chatbot and an AI agent is that agents can <em>do things</em>, not just talk about them. When you ask "What's 25 times 17?", a chatbot might guess the answer, but an agent will actually use a calculator tool to get the precise result.</p>
+        <p>Today we're building what's called a "ReAct" agent - that stands for <strong>Reasoning and Acting</strong>. It follows a simple loop: Observe the question → Reason about what tool to use → Act by calling that tool → Repeat until the task is complete.</p>
+    </div>
+
+    <div class="step">
+        <h2>📓 What is a Jupyter Notebook?</h2>
+        <p><strong>On Camera:</strong> Before we jump into the code, let me quickly explain what a Jupyter notebook is for those who might be new to this.</p>
+        <p>A Jupyter notebook is an interactive coding environment that lets you write and run Python code in cells. Think of it like a document where you can mix code, explanations, and outputs all in one place.</p>
+        <p>It's perfect for tutorials like this because we can run code step-by-step and see the results immediately. If you're following along, you can install Jupyter by running <code>pip install jupyter</code> in your terminal, then start it with <code>jupyter notebook</code>.</p>
+        <p>Each code block we'll show today represents a cell in our notebook that you can run independently.</p>
+    </div>
+
+    <div class="step">
+        <h2>STEP 1: Creating a Simple Tool</h2>
+        <p><strong>On Camera:</strong> Now let's start building! The first thing we need is to create a tool that our AI agent can use. We'll start with something simple - a calculator.</p>
+        <pre><code>def calculator(math_problem):
+    result = eval(math_problem)
+    return f"Answer: {result}"</code></pre>
+        <p>This function takes a math problem as a string, like "2 + 2" or "15 * 7", and returns the calculated result. We're using Python's <code>eval()</code> function which evaluates mathematical expressions.</p>
+        <p><strong>Important note:</strong> In a production environment, you'd never want to use <code>eval()</code> like this because it can execute any Python code, which is a security risk. But for our demo, it keeps things simple and shows the concept clearly.</p>
+        <p>Let's test our calculator to make sure it works:</p>
+        <pre><code>print(calculator("5 + 3"))
+print(calculator("10 * 4"))</code></pre>
+        <p>Great! Our tool is working. Now we have our first building block for the agent.</p>
+    </div>
+
+    <div class="step">
+        <h2>STEP 2: Connecting to OpenAI</h2>
+        <p><strong>On Camera:</strong> Now we need to connect to OpenAI's language model, which will be the "brain" of our agent. This is what gives our agent the ability to understand questions and decide which tools to use.</p>
+        <p><strong>Setup note:</strong> Before running this code, you'll need an OpenAI API key. You can get one at platform.openai.com. Create a file called <code>.env</code> in your project folder and add: <code>OPENAI_API_KEY=your_key_here</code></p>
+        <pre><code>from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+llm = ChatOpenAI()
+
+response = llm.invoke("What is the capital of France?")
+print(response.content)</code></pre>
+        <p>Let's break this down:</p>
+        <ul>
+            <li><code>load_dotenv()</code> - This loads our API key from the .env file securely</li>
+            <li><code>ChatOpenAI()</code> - This creates our connection to OpenAI's GPT model</li>
+            <li><code>llm.invoke()</code> - This sends a message to the model and gets a response</li>
+        </ul>
+        <p>We're testing the connection with a simple question. If everything is set up correctly, you should see "Paris" as the response. This confirms our AI model is working and ready to power our agent!</p>
+    </div>
+
+    <div class="step">
+        <h2>STEP 3: Defining AI Tools</h2>
+        <p><strong>On Camera:</strong> This is where the magic happens! We need to tell our AI agent what tools it has available. Think of this like giving someone a toolbox and explaining what each tool does.</p>
+        <p>The key insight here is that the AI doesn't automatically know about our calculator function. We need to wrap it in a way that the agent can understand and use.</p>
+        <pre><code>from langchain.agents import Tool
+
+tools = [
+    Tool(
+        name="Calculator",
+        func=calculator,
+        description="Useful for simple math like '2 + 2'"
+    )
+]</code></pre>
+        <p>Let's break down each part of the Tool definition:</p>
+        <ul>
+            <li><strong>name:</strong> "Calculator" - This is what the agent will call the tool internally</li>
+            <li><strong>func:</strong> calculator - This points to our actual Python function</li>
+            <li><strong>description:</strong> This is crucial! The agent reads this description to decide when to use the tool. The better your description, the smarter your agent will be.</li>
+        </ul>
+        <p><strong>Pro tip:</strong> The description is like giving instructions to a colleague. Be specific about what the tool does and when to use it. For example, "Useful for simple math like '2 + 2'" tells the agent this tool handles mathematical calculations.</p>
+        <p>Right now we only have one tool, but this list will grow as we add more capabilities to our agent. Each tool follows the same pattern: name, function, and description.</p>
+    </div>
+
+    <div class="step">
+        <h2>STEP 4: Creating the Agent</h2>
+        <p><strong>On Camera:</strong> Now comes the moment of truth - we're going to bring our agent to life! This is where we combine our language model, our tools, and LangChain's agent framework into one intelligent system.</p>
+        <pre><code>from langchain.agents import initialize_agent, AgentType
+
+agent = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)</code></pre>
+        <p>Let's understand what each parameter does:</p>
+        <ul>
+            <li><strong>tools:</strong> This is our list of available tools - right now just our calculator</li>
+            <li><strong>llm:</strong> This is our OpenAI language model that will do the reasoning</li>
+            <li><strong>agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION:</strong> This is the secret sauce! It tells the agent to use the "ReAct" pattern we mentioned earlier</li>
+            <li><strong>verbose=True:</strong> This lets us see the agent's thinking process in real-time</li>
+        </ul>
+        <p><strong>What does ZERO_SHOT_REACT_DESCRIPTION mean?</strong></p>
+        <ul>
+            <li><strong>Zero-shot:</strong> The agent can work without any training examples</li>
+            <li><strong>ReAct:</strong> Reasoning + Acting - the agent thinks through problems step by step</li>
+            <li><strong>Description:</strong> It uses our tool descriptions to decide what to do</li>
+        </ul>
+        <p>With <code>verbose=True</code>, we'll be able to watch our agent think! It will show us its internal monologue as it decides which tool to use and why. This is incredibly valuable for understanding how agents work and debugging when things go wrong.</p>
+        <p>At this point, we have a fully functional AI agent! It can read questions, understand what needs to be done, and use the right tool to solve problems.</p>
+    </div>
+
+    <div class="step">
+        <h2>STEP 5: Testing the Agent</h2>
+        <p><strong>On Camera:</strong> Time for the big test! Let's see if our agent can actually think and use tools. We'll ask it a math question and watch its reasoning process unfold.</p>
+        <pre><code>agent.run("What is 23 * 17?")</code></pre>
+        <p><strong>What happens behind the scenes:</strong></p>
+        <p>Because we set <code>verbose=True</code>, you'll see something amazing happen. The agent will show you its internal thought process, which looks something like this:</p>
+        <pre><code>> Entering new AgentExecutor chain...
+I need to calculate 23 * 17. This is a math problem, so I should use the Calculator tool.
+
+Action: Calculator
+Action Input: 23 * 17
+Observation: Answer: 391
+Thought: I now know the final answer
+Final Answer: 391</code></pre>
+        <p><strong>Breaking down the agent's reasoning:</strong></p>
+        <ul>
+            <li><strong>Thought:</strong> "This is a math problem, so I should use the Calculator tool"</li>
+            <li><strong>Action:</strong> It chooses the Calculator tool from our tools list</li>
+            <li><strong>Action Input:</strong> It passes "23 * 17" to our calculator function</li>
+            <li><strong>Observation:</strong> It receives "Answer: 391" back from the tool</li>
+            <li><strong>Final Answer:</strong> It presents the result to the user</li>
+        </ul>
+        <p>This is the ReAct pattern in action! The agent reasoned about the problem, acted by using a tool, and then used the observation to provide a final answer.</p>
+        <p><strong>Why this is incredible:</strong> The agent didn't just guess the answer - it actually used our calculator tool to compute the exact result. This is the fundamental difference between a chatbot and an AI agent!</p>
+    </div>
+
+    <div class="step">
+        <h2>STEP 6: Adding a New Tool</h2>
+        <p><strong>On Camera:</strong> Our agent works great with one tool, but the real power comes when we give it multiple tools to choose from. Let's add a weather tool to show how agents can intelligently select the right tool for each task.</p>
+        <p>For this demo, we'll create a simple weather function that simulates getting weather data from an API:</p>
+        <pre><code>def get_weather(city):
+    weather_data = {
+        "chicago": 72, "london": 65, "tokyo": 87,
+        "paris": 59, "anchorage": 31
+    }
+    city = city.lower()
+    return f"Weather in {city}: {weather_data[city]}°F" if city in weather_data else "City not found"</code></pre>
+        <p><strong>What this function does:</strong></p>
+        <ul>
+            <li>Takes a city name as input</li>
+            <li>Looks it up in our simulated weather database (a simple dictionary)</li>
+            <li>Returns the temperature or "City not found" if we don't have data</li>
+            <li>Converts the city to lowercase so "London" and "london" both work</li>
+        </ul>
+        <p><strong>Real-world note:</strong> In a production application, this function would call a real weather API like OpenWeatherMap, but for our tutorial, this simulation keeps things simple and focused on the agent concepts.</p>
+        <p>Let's test our weather function to make sure it works:</p>
+        <pre><code>print(get_weather("London"))
+print(get_weather("tokyo"))
+print(get_weather("Mars"))  # This should return "City not found"</code></pre>
+        <p>Great! Now we have a second tool. Next, we'll show our agent how to use both tools intelligently.</p>
+    </div>
+
+    <div class="step">
+        <h2>STEP 7: Expanding the Tool List</h2>
+        <p><strong>On Camera:</strong> Now we need to update our tools list to include both the calculator and the weather tool. This is where things get really interesting - our agent will need to decide which tool to use based on the question!</p>
+        <pre><code>tools = [
+    Tool(name="Calculator", func=calculator, description="Useful for simple math like '2 + 2'"),
+    Tool(name="Weather", func=get_weather, description="Useful for getting weather information for major cities")
+]</code></pre>
+        <p><strong>Notice the pattern:</strong> Each tool follows the exact same structure we learned earlier - name, function, and description. This consistency is key to how LangChain agents work.</p>
+        <p><strong>The magic is in the descriptions:</strong></p>
+        <ul>
+            <li><strong>Calculator description:</strong> "Useful for simple math like '2 + 2'" - clearly indicates mathematical operations</li>
+            <li><strong>Weather description:</strong> "Useful for getting weather information for major cities" - clearly indicates weather queries</li>
+        </ul>
+        <p>These descriptions are how the agent will decide what to do. When someone asks "What's 5 * 8?", the agent will see that matches the calculator description. When someone asks "What's the weather in London?", it will match the weather description.</p>
+        <p><strong>Pro tip:</strong> As you build more complex agents, spend time crafting clear, specific tool descriptions. Think about edge cases - what if someone asks "Is it hot in Tokyo?" versus "What's the temperature in Tokyo?" Good descriptions help the agent make the right choice.</p>
+        <p>Our agent now has a toolkit with two different capabilities. Next, we'll reinitialize the agent so it knows about both tools.</p>
+    </div>
+
+    <div class="step">
+        <h2>STEP 8: Re-initializing the Agent</h2>
+        <p><strong>On Camera:</strong> Now we need to create a new agent that knows about both tools. This is a crucial step - our original agent only knew about the calculator, so we need to rebuild it with our expanded toolkit.</p>
+        <pre><code>agent = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)</code></pre>
+        <p><strong>Why we need to re-initialize:</strong> When we first created our agent, we passed it a tools list with only the calculator. The agent builds its internal understanding based on that initial toolkit. To add new tools, we need to create a fresh agent instance.</p>
+        <p><strong>What's happening under the hood:</strong></p>
+        <ul>
+            <li>LangChain reads our updated tools list</li>
+            <li>It creates internal prompts that describe each tool to the language model</li>
+            <li>The agent now "knows" it has two options: Calculator and Weather</li>
+            <li>It will use the tool descriptions to decide which one fits each question</li>
+        </ul>
+        <p><strong>Think of it like this:</strong> We're giving our agent a new instruction manual. The old manual said "You have a calculator tool." The new manual says "You have a calculator tool AND a weather tool. Here's when to use each one."</p>
+        <p>Our agent is now more capable and intelligent. It can handle two completely different types of questions and will choose the appropriate tool for each one. Let's test this multi-tool intelligence!</p>
+    </div>
+
+    <div class="step">
+        <h2>STEP 9: Final Test</h2>
+        <p><strong>On Camera:</strong> This is the moment we've been building toward! Let's test our multi-tool agent with two completely different types of questions and watch it intelligently choose the right tool for each one.</p>
+        <pre><code>agent.run("What is the temperature in London?")
+agent.run("What is 7 * 32")</code></pre>
+        <p><strong>What you'll see with the first question:</strong></p>
+        <pre><code>> Entering new AgentExecutor chain...
+I need to find the temperature in London. This is a weather question, so I should use the Weather tool.
+
+Action: Weather
+Action Input: London
+Observation: Weather in london: 65°F
+Thought: I now know the temperature in London
+Final Answer: The temperature in London is 65°F</code></pre>
+        <p><strong>What you'll see with the second question:</strong></p>
+        <pre><code>> Entering new AgentExecutor chain...
+I need to calculate 7 * 32. This is a math problem, so I should use the Calculator tool.
+
+Action: Calculator
+Action Input: 7 * 32
+Observation: Answer: 224
+Thought: I now know the final answer
+Final Answer: 224</code></pre>
+        <p><strong>The magic moment:</strong> Notice how the agent correctly identifies each question type and chooses the appropriate tool! For the weather question, it uses the Weather tool. For the math question, it uses the Calculator tool. This is artificial intelligence in action!</p>
+        <p><strong>Why this is revolutionary:</strong> We now have a single AI system that can handle multiple, completely different types of tasks. You could ask it "What's the weather in Tokyo?" followed by "What's 15% of 200?" and it would handle both perfectly.</p>
+        <p>This is just the beginning. Imagine adding tools for web search, database queries, email sending, file operations, or API calls. Each new tool makes your agent more capable and useful!</p>
+    </div>
+
+    <div class="step">
+        <h2>🎉 WRAP-UP</h2>
+        <p><strong>On Camera:</strong> Congratulations! You've just built your first AI agent from scratch. Let's recap what we've accomplished and where you can go from here.</p>
+        
+        <p><strong>What we built today:</strong></p>
+        <ul>
+            <li>✅ Created custom tools (calculator and weather)</li>
+            <li>✅ Connected to OpenAI's language model</li>
+            <li>✅ Built a ReAct agent that can reason and act</li>
+            <li>✅ Demonstrated intelligent tool selection</li>
+            <li>✅ Watched an AI system think through problems step by step</li>
+        </ul>
+        
+        <p><strong>The key concepts you've mastered:</strong></p>
+        <ul>
+            <li><strong>Tools:</strong> How to wrap functions so agents can use them</li>
+            <li><strong>Descriptions:</strong> How clear descriptions enable smart tool selection</li>
+            <li><strong>ReAct Pattern:</strong> How agents reason about problems and take action</li>
+            <li><strong>Agent Architecture:</strong> How LLMs, tools, and reasoning work together</li>
+        </ul>
+        
+        <p><strong>Your next steps:</strong></p>
+        <ul>
+            <li>🔧 Try adding more tools: web search, file operations, API calls</li>
+            <li>🌐 Connect real APIs instead of simulated data</li>
+            <li>🧠 Experiment with different agent types and reasoning patterns</li>
+            <li>🛡️ Add error handling and input validation to your tools</li>
+            <li>📊 Build agents for your specific use case - data analysis, automation, research</li>
+        </ul>
+        
+        <p><strong>Real-world applications:</strong> The agent you built today is the foundation for everything from customer service bots that can look up orders, to research assistants that can search databases and perform calculations, to automation systems that can interact with multiple APIs.</p>
+        
+        <p><strong>Final thought:</strong> You've just created artificial intelligence that can actually DO things, not just talk about them. That's the power of AI agents - they bridge the gap between conversation and action.</p>
+        
+        <p>If this tutorial helped you, hit that like button and subscribe for more AI tutorials. Drop a comment and let us know what kind of agent you want to build next - maybe we'll feature it in a future video!</p>
+        
+        <p><strong>Keep building, keep learning, and remember - the future of AI isn't just about smarter chatbots, it's about intelligent systems that can take action in the real world. You just built one!</strong></p>
+    </div>
+</body>
+</html>
