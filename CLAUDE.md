@@ -8,9 +8,7 @@ This is a YouTube content creation repository focused on AI agent tutorials usin
 
 ## File Structure
 
-- `langchain_demo.ipynb` - Interactive Jupyter notebook demonstrating LangChain agent creation with step-by-step examples
 - `youtube_demo.ipynb` - Additional Jupyter notebook with AI agent demonstrations
-- `ai_agent_youtube_script.html` - HTML-formatted script for YouTube video content about building AI agents
 - `script.html` - Additional HTML script content (appears to be identical to ai_agent_youtube_script.html)
 
 ## Working with Jupyter Notebooks
